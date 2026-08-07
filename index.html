@@ -1,0 +1,212 @@
+<html lang="ja">
+
+<head>
+<meta charset="UTF-8">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; } 
+
+body { background: #54487a; 
+color: #e8e0f0; 
+font-family: "Hiragino Mincho proN", serif; 
+height: 100vh; 
+display: flex; 
+align-items: center; 
+justify-content: center; }
+
+.screen { display: none; 
+text-align: center; 
+width: 90%; 
+max-width: 400px; }
+
+.screen.active { display: block; }
+
+button { background: #2d2438; 
+color: #e8e0f0; 
+border: 1px solid #4a3f5c; 
+padding: 14px 24px; 
+margin: 6px; 
+border-radius: 6px; 
+font-size: 1rem; 
+cursor: pointer; 
+transition: background 0.2s; }
+
+button.hover { background: #3d3350; }
+
+.selected { background: #6b5b95; 
+border-color: #6b5b95; }
+
+#currentTaskDisplay { font-size: 1.1rem; 
+color: #a89bc4; 
+letter-spacing: 0.1rem; 
+margin-botoom: 16px; }
+
+#timerDisplay { font-size: 5.5rem; 
+font-weight: 300; 
+letter-spacing: 0.05em; 
+color: #e8e0f0; 
+margin: 24px 0; } 
+
+#taskButtonList { display: flex; 
+flex-direction: column; 
+gap: 8px; 
+margin-bottom: 24px; }
+
+</style>
+</head>
+
+<body>
+ <div class="screen active" id="selectScreen">
+  <div id="taskButtonList"></div>
+  <button id="confirmTaskBtn">これで決定</button>
+ </div>
+
+ <div class="screen" id="timeSelectScreen">
+  <div id="timeListDisplay"></div>
+  <button class="timeBtn" data-minutes="15">15分</button>
+  <button class="timeBtn" data-minutes="30">30分</button>
+  <button class="timeBtn" data-minutes="45">45分</button>
+  <button class="timeBtn" data-minutes="60">60分</button>
+ </div>
+
+ <div class="screen" id="timerScreen">
+  <div id="currentTaskDisplay"></div>
+  <div id="timerDisplay"></div>
+  <div id="taskListDisplay"></div>
+ <button id="finishTaskBtn">完了</button>
+ </div>
+
+ <div class="screen" id="endScreen">
+ <button id="returnTaskBtn">タスク選択へ戻る</button>
+ </div>
+
+
+<script> 
+
+const selectScreen = document.getElementById("selectScreen");  
+const timeSelectScreen = document.getElementById("timeSelectScreen"); 
+
+
+const tasks = ["化粧", "整髪", "着替え", "シャワー" ] 
+
+const taskButtonList = document.getElementById("taskButtonList"); 
+
+let selectedTasks = [];
+
+let currentTaskIndex = 0; 
+
+tasks.forEach(function(taskName){const btn = document.createElement("button"); 
+btn.textContent = taskName; 
+btn.addEventListener("click", function()
+{const found = selectedTasks.find(function(t){return t.name ===taskName}); 
+if(found){selectedTasks = selectedTasks.filter(function(t){return t.name !== taskName;}); btn.classList.remove("selected"); }
+else{selectedTasks.push({name: taskName, minutes: null, remainingSeconds: null}); 
+btn.classList.add("selected"); } 
+console.log(JSON.stringify(selectedTasks, null, 2)); 
+}); 
+taskButtonList.appendChild(btn); }); 
+
+const timeListDisplay = document.getElementById("timeListDisplay"); 
+
+
+
+
+const taskListDisplay = document.getElementById("taskListDisplay"); 
+
+function renderTaskList(){taskListDisplay.innerHTML = ""; 
+selectedTasks.forEach(function(task, index)
+{const row = document.createElement("div"); 
+const minutes = Math.floor(task.remainingSeconds / 60);
+const seconds = task.remainingSeconds % 60; 
+const timeText = String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0"); 
+row.textContent = task.name + " " + timeText; 
+row.id = "taskRow" + index; 
+taskListDisplay.appendChild(row); }); };
+
+
+
+const confirmTaskBtn = document.getElementById("confirmTaskBtn"); 
+
+confirmTaskBtn.addEventListener("click", function(){console.log("選ばれたタスク:", selectedTasks); 
+selectScreen.classList.remove("active"); 
+timeSelectScreen.classList.add("active"); 
+timeListDisplay.textContent = selectedTasks[currentTaskIndex].name;
+});
+
+ 
+const finishTaskBtn = document.getElementById("finishTaskBtn"); 
+const endScreen = document.getElementById("endScreen"); 
+
+finishTaskBtn.addEventListener("click", function(){finishCurrentTask()}); 
+
+
+const returnTaskBtn = document.getElementById("returnTaskBtn"); 
+
+returnTaskBtn.addEventListener("click", function(){endScreen.classList.remove("active"); selectScreen.classList.add("active"); 
+currentTaskIndex = 0; 
+selectedTasks = []; 
+document.querySelectorAll(".selected").forEach(function(btn){btn.classList.remove("selected")}); 
+});
+
+
+const timerDisplay = document.getElementById("timerDisplay"); 
+const timerScreen = document.getElementById("timerScreen"); 
+
+let remainingSeconds = 15 * 60;  
+
+let timerId; 
+
+const currentTaskDisplay = document.getElementById("currentTaskDisplay"); 
+
+const timeBtns = document.querySelectorAll(".timeBtn"); 
+
+timeBtns.forEach(function(btn){
+btn.addEventListener("click",function(){ //Btnがclickされたときの動き
+const selectedMinutes = Number(btn.dataset.minutes); 
+remainingSeconds = selectedMinutes * 60; 
+selectedTasks[currentTaskIndex].minutes = selectedMinutes; 
+selectedTasks[currentTaskIndex].remainingSeconds = selectedMinutes * 60
+if(currentTaskIndex + 1 < selectedTasks.length){currentTaskIndex = currentTaskIndex + 1; 
+timeListDisplay.textContent = selectedTasks[currentTaskIndex].name;}
+else{currentTaskIndex = 0; 
+remainingSeconds = selectedTasks[currentTaskIndex].remainingSeconds; 
+timeSelectScreen.classList.remove("active"); 
+timerScreen.classList.add("active"); 
+currentTaskDisplay.textContent = selectedTasks[currentTaskIndex].name; 
+renderTaskList(); 
+updateDisplay(); 
+startTimer();} }); }); 
+
+ 
+
+function updateDisplay(){
+const minutes = Math.floor(remainingSeconds / 60); 
+const seconds = remainingSeconds % 60; 
+const timeText = String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0"); 
+timerDisplay.textContent = timeText; 
+const taskTime = document.getElementById("taskRow" + currentTaskIndex); 
+taskTime.textContent = selectedTasks[currentTaskIndex].name +  " "  + timeText;  
+currentTaskDisplay.textContent = selectedTasks[currentTaskIndex].name; }; 
+
+
+function finishCurrentTask(){
+clearInterval(timerId); 
+const finishTask = document.getElementById("taskRow" + currentTaskIndex); 
+finishTask.textContent = selectedTasks[currentTaskIndex].name + " " + "00:00"; 
+currentTaskIndex = currentTaskIndex + 1; 
+if (currentTaskIndex < selectedTasks.length)
+{remainingSeconds = selectedTasks[currentTaskIndex].remainingSeconds; 
+updateDisplay(); 
+startTimer(); }
+else {timerScreen.classList.remove("active"); 
+endScreen.classList.add("active"); }}
+
+function startTimer(){clearInterval(timerId); 
+timerId =  setInterval(function(){remainingSeconds = remainingSeconds - 1; 
+if (remainingSeconds <= 0) {finishCurrentTask(); }
+updateDisplay(); }, 1000); }
+
+
+ </script>
+ 
+</body>
+</html>
