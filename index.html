@@ -133,7 +133,7 @@ const confirmTaskBtn = document.getElementById("confirmTaskBtn");
 confirmTaskBtn.addEventListener("click", function()
 {if(selectedTasks.length === 0){alert("タスクが未選択"); 
 return;}
-{console.log("選ばれたタスク:", selectedTasks); 
+console.log("選ばれたタスク:", selectedTasks); 
 selectScreen.classList.remove("active"); 
 timeSelectScreen.classList.add("active"); 
 timeListDisplay.textContent = selectedTasks[currentTaskIndex].name;
