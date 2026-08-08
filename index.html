@@ -160,6 +160,8 @@ const timerScreen = document.getElementById("timerScreen");
 
 let remainingSeconds = 15 * 60;  
 
+let endTime = null; 
+
 let timerId; 
 
 const currentTaskDisplay = document.getElementById("currentTaskDisplay"); 
@@ -207,10 +209,19 @@ startTimer(); }
 else {timerScreen.classList.remove("active"); 
 endScreen.classList.add("active"); }}
 
-function startTimer(){clearInterval(timerId); 
-timerId =  setInterval(function(){remainingSeconds = remainingSeconds - 1; 
+function startTimer(){
+ clearInterval(timerId); 
+ endTime = Date.now() + remainingSeconds * 1000; 
+ timerId =  setInterval(function(){
+ remainingSeconds = Math.round((endTime - Date.now()) / 1000); 
 if (remainingSeconds <= 0) {finishCurrentTask(); }
 updateDisplay(); }, 1000); }
+
+document.addEventListener("visibilitychange", function(){
+ if(document.visibilityState === "visible" && endTime !== null){
+  remainingSeconds = Math.round((endTime - Date.now()) / 1000); 
+ }
+}); 
 
 
  </script>
