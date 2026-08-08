@@ -130,7 +130,10 @@ taskListDisplay.appendChild(row); }); };
 
 const confirmTaskBtn = document.getElementById("confirmTaskBtn"); 
 
-confirmTaskBtn.addEventListener("click", function(){console.log("選ばれたタスク:", selectedTasks); 
+confirmTaskBtn.addEventListener("click", function()
+{if(selectedTasks.length === 0){alert("タスクが未選択"); 
+return;}
+{console.log("選ばれたタスク:", selectedTasks); 
 selectScreen.classList.remove("active"); 
 timeSelectScreen.classList.add("active"); 
 timeListDisplay.textContent = selectedTasks[currentTaskIndex].name;
@@ -163,10 +166,10 @@ const currentTaskDisplay = document.getElementById("currentTaskDisplay");
 
 const timeBtns = document.querySelectorAll(".timeBtn"); 
 
-timeBtns.forEach(function(btn){
+timeBtns.forEach(function(btn){　//timeBtnの一つ一つにbtnという名前をつけて処理していく 
 btn.addEventListener("click",function(){ //Btnがclickされたときの動き
-const selectedMinutes = Number(btn.dataset.minutes); 
-remainingSeconds = selectedMinutes * 60; 
+const selectedMinutes = Number(btn.dataset.minutes); //btnのデータセットのminutesの文字列を数値に変換してselectedMinutesとして宣言する
+remainingSeconds = selectedMinutes * 60; //
 selectedTasks[currentTaskIndex].minutes = selectedMinutes; 
 selectedTasks[currentTaskIndex].remainingSeconds = selectedMinutes * 60
 if(currentTaskIndex + 1 < selectedTasks.length){currentTaskIndex = currentTaskIndex + 1; 
