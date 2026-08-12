@@ -2,10 +2,6 @@
 
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="routine-timer">
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; } 
 
@@ -60,6 +56,7 @@ margin-bottom: 24px; }
 
 <body>
  <div class="screen active" id="selectScreen">
+  <div id="groupButtonList"></div>
   <div id="taskButtonList"></div>
   <button id="confirmTaskBtn">これで決定</button>
  </div>
@@ -89,54 +86,83 @@ margin-bottom: 24px; }
 const selectScreen = document.getElementById("selectScreen");  
 const timeSelectScreen = document.getElementById("timeSelectScreen"); 
 
+const groupCount = 6; 
 
-const tasks = ["化粧", "整髪", "着替え", "シャワー" ] 
+const groupButtonList = document.getElementById("groupButtonList"); 
+
+let activeGroupIndex = 0; 
+
+let selectedGroups = 
+[{ taskNames: []}, {taskNames: []}, {taskNames: []}, {taskNames: []}, {taskNames: []}, {taskNames: []}];
+
+selectedGroups.forEach(function(group, index){
+const btn = document.createElement("button"); 
+btn.textContent = "箱" + (index + 1); 
+if (index ===0 ){
+btn.classList.add("selected")}; 
+btn.addEventListener("click", function(){
+document.querySelectorAll(".groupBtn").forEach(function(b){
+b.classList.remove("selected"); }); 
+btn.classList.add("selected"); 
+activeGroupIndex = index; 
+console.log("アクティブな箱", activeGroupIndex); }); 
+btn.classList.add("groupBtn"); 
+groupButtonList.appendChild(btn); }); 
+
+
+
+const tasks = ["フロ", "顔", "髪", "服", "荷物", "準備"] 
 
 const taskButtonList = document.getElementById("taskButtonList"); 
 
 let selectedTasks = [];
 
-let currentTaskIndex = 0; 
+let currentGroupIndex = 0; 
 
-tasks.forEach(function(taskName){const btn = document.createElement("button"); 
+tasks.forEach(function(taskName){
+const btn = document.createElement("button"); 
 btn.textContent = taskName; 
 btn.addEventListener("click", function()
-{const found = selectedTasks.find(function(t){return t.name ===taskName}); 
-if(found){selectedTasks = selectedTasks.filter(function(t){return t.name !== taskName;}); btn.classList.remove("selected"); }
-else{selectedTasks.push({name: taskName, minutes: null, remainingSeconds: null}); 
+{const found = selectedGroups[activeGroupIndex].taskNames.find(function(t){return t === taskName}); 
+if(found){selectedGroups[activeGroupIndex].taskNames = selectedGroups[activeGroupIndex].taskNames.filter(function(t){return t !== taskName;}); btn.classList.remove("selected"); }
+else{selectedGroups[activeGroupIndex].taskNames.push(taskName); 
 btn.classList.add("selected"); } 
-console.log(JSON.stringify(selectedTasks, null, 2)); 
+console.log(JSON.stringify(selectedGroups, null, 2)); 
 }); 
 taskButtonList.appendChild(btn); }); 
 
+
+
+
+
 const timeListDisplay = document.getElementById("timeListDisplay"); 
-
-
-
 
 const taskListDisplay = document.getElementById("taskListDisplay"); 
 
 function renderTaskList(){taskListDisplay.innerHTML = ""; 
-selectedTasks.forEach(function(task, index)
+usedGroups.forEach(function(group, index)
 {const row = document.createElement("div"); 
-const minutes = Math.floor(task.remainingSeconds / 60);
-const seconds = task.remainingSeconds % 60; 
+const minutes = Math.floor(group.remainingSeconds / 60);
+const seconds = group.remainingSeconds % 60; 
 const timeText = String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0"); 
-row.textContent = task.name + " " + timeText; 
+row.textContent = group.taskNames.join("・") + " " + timeText; 
 row.id = "taskRow" + index; 
 taskListDisplay.appendChild(row); }); };
 
+
+let usedGroups = []; 
 
 
 const confirmTaskBtn = document.getElementById("confirmTaskBtn"); 
 
 confirmTaskBtn.addEventListener("click", function()
-{if(selectedTasks.length === 0){alert("タスクが未選択"); 
-return;}
-console.log("選ばれたタスク:", selectedTasks); 
+{usedGroups = selectedGroups.filter(function(group){return group.taskNames.length > 0;});
+if(usedGroups.length === 0){alert("タスクが未選択"); 
+return; }
+console.log("使う箱:", usedGroups); 
 selectScreen.classList.remove("active"); 
 timeSelectScreen.classList.add("active"); 
-timeListDisplay.textContent = selectedTasks[currentTaskIndex].name;
+timeListDisplay.textContent = usedGroups[currentGroupIndex].taskNames.join("・");
 });
 
  
@@ -149,16 +175,19 @@ finishTaskBtn.addEventListener("click", function(){finishCurrentTask()});
 const returnTaskBtn = document.getElementById("returnTaskBtn"); 
 
 returnTaskBtn.addEventListener("click", function(){endScreen.classList.remove("active"); selectScreen.classList.add("active"); 
-currentTaskIndex = 0; 
+currentGroupIndex = 0; 
 selectedTasks = []; 
 document.querySelectorAll(".selected").forEach(function(btn){btn.classList.remove("selected")}); 
+activeGroupIndex = 0; 
+selectedGroups = [{ taskNames: []}, {taskNames: []}, {taskNames: []}, {taskNames: []}, ]; 
+document.querySelectorAll(".groupBtn")[0].classList.add("selected"); 
 });
 
 
 const timerDisplay = document.getElementById("timerDisplay"); 
 const timerScreen = document.getElementById("timerScreen"); 
 
-let remainingSeconds = 15 * 60;  
+let remainingSeconds = 15 * 60; 
 
 let endTime = null; 
 
@@ -168,19 +197,23 @@ const currentTaskDisplay = document.getElementById("currentTaskDisplay");
 
 const timeBtns = document.querySelectorAll(".timeBtn"); 
 
-timeBtns.forEach(function(btn){　//timeBtnの一つ一つにbtnという名前をつけて処理していく 
-btn.addEventListener("click",function(){ //Btnがclickされたときの動き
-const selectedMinutes = Number(btn.dataset.minutes); //btnのデータセットのminutesの文字列を数値に変換してselectedMinutesとして宣言する
-remainingSeconds = selectedMinutes * 60; //
-selectedTasks[currentTaskIndex].minutes = selectedMinutes; 
-selectedTasks[currentTaskIndex].remainingSeconds = selectedMinutes * 60
-if(currentTaskIndex + 1 < selectedTasks.length){currentTaskIndex = currentTaskIndex + 1; 
-timeListDisplay.textContent = selectedTasks[currentTaskIndex].name;}
-else{currentTaskIndex = 0; 
-remainingSeconds = selectedTasks[currentTaskIndex].remainingSeconds; 
+
+timeBtns.forEach(function(btn){  //timeBtnsの一つ一つにbtnという名前を付けて処理していく
+
+btn.addEventListener("click",function(){  //btnがclickされたときの動き
+
+const selectedMinutes = Number(btn.dataset.minutes); 　　//btnのデータセットのminutesの文字列を数値に変換してselectedMinutesとして宣言する
+remainingSeconds = selectedMinutes * 60; 　　
+usedGroups[currentGroupIndex].minutes = selectedMinutes; 
+usedGroups[currentGroupIndex].remainingSeconds = selectedMinutes * 60
+if(currentGroupIndex + 1 < usedGroups.length){
+currentGroupIndex = currentGroupIndex + 1; 
+timeListDisplay.textContent = usedGroups[currentGroupIndex].taskNames.join("・");}
+else{currentGroupIndex = 0; 
+remainingSeconds = usedGroups[currentGroupIndex].remainingSeconds; 
 timeSelectScreen.classList.remove("active"); 
 timerScreen.classList.add("active"); 
-currentTaskDisplay.textContent = selectedTasks[currentTaskIndex].name; 
+currentTaskDisplay.textContent = usedGroups[currentGroupIndex].taskNames.join("・"); 
 renderTaskList(); 
 updateDisplay(); 
 startTimer();} }); }); 
@@ -192,36 +225,37 @@ const minutes = Math.floor(remainingSeconds / 60);
 const seconds = remainingSeconds % 60; 
 const timeText = String(minutes).padStart(2, "0") + ":" + String(seconds).padStart(2, "0"); 
 timerDisplay.textContent = timeText; 
-const taskTime = document.getElementById("taskRow" + currentTaskIndex); 
-taskTime.textContent = selectedTasks[currentTaskIndex].name +  " "  + timeText;  
-currentTaskDisplay.textContent = selectedTasks[currentTaskIndex].name; }; 
+const taskTime = document.getElementById("taskRow" + currentGroupIndex); 
+taskTime.textContent = usedGroups[currentGroupIndex].taskNames.join("・") +  " "  + timeText;  
+currentTaskDisplay.textContent = usedGroups[currentGroupIndex].taskNames.join("・"); }; 
 
 
 function finishCurrentTask(){
 clearInterval(timerId); 
-const finishTask = document.getElementById("taskRow" + currentTaskIndex); 
-finishTask.textContent = selectedTasks[currentTaskIndex].name + " " + "00:00"; 
-currentTaskIndex = currentTaskIndex + 1; 
-if (currentTaskIndex < selectedTasks.length)
-{remainingSeconds = selectedTasks[currentTaskIndex].remainingSeconds; 
+const finishTask = document.getElementById("taskRow" + currentGroupIndex); 
+finishTask.textContent = usedGroups[currentGroupIndex].taskNames.join("・") + " " + "00:00"; 
+currentGroupIndex = currentGroupIndex + 1; 
+if (currentGroupIndex < usedGroups.length)
+{remainingSeconds = usedGroups[currentGroupIndex].remainingSeconds; 
 updateDisplay(); 
 startTimer(); }
 else {timerScreen.classList.remove("active"); 
 endScreen.classList.add("active"); }}
 
 function startTimer(){
- clearInterval(timerId); 
- endTime = Date.now() + remainingSeconds * 1000; 
- timerId =  setInterval(function(){
- remainingSeconds = Math.round((endTime - Date.now()) / 1000); 
+clearInterval(timerId); 
+endTime = Date.now() + remainingSeconds * 1000; 
+timerId =  setInterval(function(){ 
+remainingSeconds = Math.round((endTime - Date.now()) / 1000); 
 if (remainingSeconds <= 0) {finishCurrentTask(); }
-updateDisplay(); }, 1000); }
+updateDisplay(); }, 1000); } 
 
 document.addEventListener("visibilitychange", function(){
- if(document.visibilityState === "visible" && endTime !== null){
-  remainingSeconds = Math.round((endTime - Date.now()) / 1000); 
- }
-}); 
+if(document.visibilityState === "visible" && endTime !== null){
+remainingSeconds = Math.round((endTime - Date.now()) / 1000); 
+updateDisplay(); 
+}}); 
+
 
 
  </script>
