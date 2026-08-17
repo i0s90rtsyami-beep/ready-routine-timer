@@ -6,10 +6,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="routine-timer">
+
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; } 
 
-body { background: #54487a; 
+body { 
+background: #54487a; 
 color: #e8e0f0; 
 font-family: "Hiragino Mincho proN", serif; 
 height: 100vh; 
@@ -17,14 +19,17 @@ display: flex;
 align-items: center; 
 justify-content: center; }
 
-.screen { display: none; 
+.screen { 
+display: none; 
 text-align: center; 
 width: 90%; 
 max-width: 400px; }
 
-.screen.active { display: block; }
+.screen.active { 
+display: block; }
 
-button { background: #2d2438; 
+button { 
+background: #2d2438; 
 color: #e8e0f0; 
 border: 1px solid #4a3f5c; 
 padding: 14px 24px; 
@@ -34,26 +39,46 @@ font-size: 1rem;
 cursor: pointer; 
 transition: background 0.2s; }
 
-button.hover { background: #3d3350; }
+button.hover { 
+background: #3d3350; }
 
-.selected { background: #6b5b95; 
+.selected { 
+background: #6b5b95; 
 border-color: #6b5b95; }
 
-#currentTaskDisplay { font-size: 1.1rem; 
+#currentTaskDisplay { 
+font-size: 1.1rem; 
 color: #a89bc4; 
 letter-spacing: 0.1rem; 
 margin-botoom: 16px; }
 
-#timerDisplay { font-size: 5.5rem; 
+#timerDisplay { 
+font-size: 5.5rem; 
 font-weight: 300; 
 letter-spacing: 0.05em; 
 color: #e8e0f0; 
 margin: 24px 0; } 
 
-#taskButtonList { display: flex; 
+#groupButtonList { 
+display: flex; 
 flex-direction: column; 
 gap: 8px; 
-margin-bottom: 24px; }
+margin-bottom: 16px; }
+
+#groupButtonList button{
+text-align: left; }
+
+#taskButtonList { 
+display: grid; 
+grid-template-columns: repeat(2, 1fr); 
+gap: 8px; 
+margin-bottom: 24px; } 
+
+#taskButtonList button{
+padding: 8px 16px; 
+margin: 2px; 
+border-radius: 24px;}
+
 
 </style>
 </head>
@@ -92,6 +117,15 @@ const timeSelectScreen = document.getElementById("timeSelectScreen");
 
 const groupCount = 6; 
 
+let groupButtons = []; 
+
+function updateGroupButtonLabel(index)
+{const group = selectedGroups[index]; 
+const btn = groupButtons[index]; 
+if(group.taskNames.length === 0)
+{btn.textContent = "箱" + (index + 1);} 
+else{btn.textContent = "箱" + (index + 1) + ":" + group.taskNames.join("・"); }}
+
 const groupButtonList = document.getElementById("groupButtonList"); 
 
 let activeGroupIndex = 0; 
@@ -111,6 +145,7 @@ btn.classList.add("selected");
 activeGroupIndex = index; 
 console.log("アクティブな箱", activeGroupIndex); }); 
 btn.classList.add("groupBtn"); 
+groupButtons.push(btn); 
 groupButtonList.appendChild(btn); }); 
 
 
@@ -131,6 +166,7 @@ btn.addEventListener("click", function()
 if(found){selectedGroups[activeGroupIndex].taskNames = selectedGroups[activeGroupIndex].taskNames.filter(function(t){return t !== taskName;}); btn.classList.remove("selected"); }
 else{selectedGroups[activeGroupIndex].taskNames.push(taskName); 
 btn.classList.add("selected"); } 
+updateGroupButtonLabel(activeGroupIndex); 
 console.log(JSON.stringify(selectedGroups, null, 2)); 
 }); 
 taskButtonList.appendChild(btn); }); 
@@ -183,8 +219,9 @@ currentGroupIndex = 0;
 selectedTasks = []; 
 document.querySelectorAll(".selected").forEach(function(btn){btn.classList.remove("selected")}); 
 activeGroupIndex = 0; 
-selectedGroups = [{ taskNames: []}, {taskNames: []}, {taskNames: []}, {taskNames: []}, ]; 
+selectedGroups = [{ taskNames: []}, {taskNames: []}, {taskNames: []}, {taskNames: []}, { taskNames: []}, { taskNames: []} ]; 
 document.querySelectorAll(".groupBtn")[0].classList.add("selected"); 
+selectedGroups.forEach(function(group, index){updateGroupButtonLabel(index); }); 
 });
 
 
